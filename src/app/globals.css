@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  @apply bg-stone-50 text-stone-900 antialiased;
+}
+
+/* Make the Leaflet map fill its container and sit below panels/headers. */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+/* Custom emoji markers shouldn't show Leaflet's default white box. */
+.tree-marker {
+  background: transparent;
+  border: none;
+}
