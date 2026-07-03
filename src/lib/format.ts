@@ -1,4 +1,25 @@
-import type { CareAction, HealthStatus } from "@/lib/database.types";
+import type {
+  CareAction,
+  HealthStatus,
+  PlantOrigin,
+  PlantType,
+  Tree,
+} from "@/lib/database.types";
+
+/** Fill in defaults for the plant-type/origin/features columns so the app is
+ *  resilient to rows created before migration 002 was applied. */
+export function normalizeTree(row: Tree): Tree {
+  return {
+    ...row,
+    plant_type: row.plant_type ?? "tree",
+    origin: row.origin ?? "planted",
+    area_note: row.area_note ?? null,
+    features: row.features ?? [],
+    notability: row.notability ?? null,
+    is_veteran: row.is_veteran ?? false,
+    approx_age: row.approx_age ?? null,
+  };
+}
 
 export const STATUS_META: Record<
   HealthStatus,
@@ -9,6 +30,62 @@ export const STATUS_META: Record<
   struggling: { label: "Struggling", color: "#b45309", emoji: "🍂" },
   dead: { label: "Dead", color: "#78716c", emoji: "🪾" },
 };
+
+// --- Plant types (issue #1) ------------------------------------------
+export const PLANT_TYPE_META: Record<
+  PlantType,
+  { label: string; emoji: string; color: string }
+> = {
+  tree: { label: "Tree", emoji: "🌳", color: "#15803d" },
+  wildflower: { label: "Wildflower", emoji: "🌼", color: "#ca8a04" },
+  shrub: { label: "Shrub / bush", emoji: "🌿", color: "#4d7c0f" },
+  hedge: { label: "Hedge", emoji: "🌲", color: "#166534" },
+  fruit_bush: { label: "Fruit bush / tree", emoji: "🍓", color: "#be123c" },
+  climber: { label: "Climber", emoji: "🍃", color: "#0d9488" },
+  other: { label: "Other", emoji: "🪴", color: "#6b7280" },
+};
+
+export const PLANT_TYPE_OPTIONS: PlantType[] = [
+  "tree",
+  "wildflower",
+  "shrub",
+  "hedge",
+  "fruit_bush",
+  "climber",
+  "other",
+];
+
+// Types for which an "approx. area / size" note is offered.
+export const AREA_NOTE_TYPES: PlantType[] = ["wildflower", "hedge", "shrub", "climber"];
+
+// --- Fun features (issue #2) -----------------------------------------
+// Predefined quick-pick tags. Custom entries are stored as free text and
+// rendered with a generic icon.
+export const FEATURE_META: Record<string, { label: string; emoji: string }> = {
+  fairy_door: { label: "Fairy door", emoji: "🚪" },
+  rope_swing: { label: "Rope swing", emoji: "🪢" },
+  tree_house: { label: "Tree house / den", emoji: "🏠" },
+  good_climbing: { label: "Good for climbing", emoji: "🧗" },
+  hollow: { label: "Hollow / hidey-hole", emoji: "🕳️" },
+  conkers_berries: { label: "Conkers / berries", emoji: "🌰" },
+  bird_box: { label: "Bird box / nest", emoji: "🐦" },
+  carved_faces: { label: "Carved faces / bark", emoji: "😀" },
+};
+
+export const FEATURE_OPTIONS: string[] = Object.keys(FEATURE_META);
+
+export function featureLabel(value: string): { label: string; emoji: string } {
+  return FEATURE_META[value] ?? { label: value, emoji: "🔖" };
+}
+
+// --- Origin (issue #3) -----------------------------------------------
+export const ORIGIN_META: Record<PlantOrigin, { label: string; emoji: string }> = {
+  planted: { label: "Planted by a member", emoji: "🌱" },
+  observed: { label: "Of interest (observed)", emoji: "⭐" },
+};
+
+// Default "planted by" attribution for observed / wild records.
+export const WILD_PLANTER = "Wild";
 
 export const HEALTH_OPTIONS: HealthStatus[] = [
   "thriving",
@@ -29,23 +106,47 @@ export const CARE_ACTION_META: Record<
   note: { label: "Note", emoji: "📝" },
 };
 
-/** Build the HTML for a Leaflet divIcon representing a tree's status. */
-export function treeMarkerHtml(status: HealthStatus, needsAttention: boolean): string {
-  const meta = STATUS_META[status];
-  const ring = needsAttention ? "box-shadow:0 0 0 3px #dc2626;" : "";
-  const flag = needsAttention
-    ? `<span style="position:absolute;top:-6px;right:-6px;font-size:12px;line-height:1">🚩</span>`
+export interface MarkerSpec {
+  plantType: PlantType;
+  healthStatus: HealthStatus;
+  needsAttention: boolean;
+  origin: PlantOrigin;
+  hasFeatures: boolean;
+}
+
+/** Build the HTML for a Leaflet divIcon.
+ *  Background colour + emoji = plant type; a small dot = health; an amber
+ *  dashed ring + ⭐ = an observed "of interest" record; ✨ = has fun features;
+ *  a red ring + 🚩 = needs attention. */
+export function plantMarkerHtml(spec: MarkerSpec): string {
+  const type = PLANT_TYPE_META[spec.plantType];
+  const health = STATUS_META[spec.healthStatus];
+  const observed = spec.origin === "observed";
+
+  const border = observed ? "border:3px dashed #f59e0b;" : "border:2px solid white;";
+  const ring = spec.needsAttention ? "box-shadow:0 0 0 3px #dc2626;" : "";
+
+  const attentionFlag = spec.needsAttention
+    ? `<span style="position:absolute;top:-7px;right:-7px;font-size:12px;line-height:1">🚩</span>`
     : "";
+  const featureSpark = spec.hasFeatures
+    ? `<span style="position:absolute;top:-7px;left:-7px;font-size:12px;line-height:1">✨</span>`
+    : "";
+  const observedStar = observed
+    ? `<span style="position:absolute;bottom:-7px;left:-7px;font-size:11px;line-height:1">⭐</span>`
+    : "";
+  const healthDot = `<span style="position:absolute;bottom:-2px;right:-2px;width:10px;height:10px;border-radius:9999px;background:${health.color};border:2px solid white"></span>`;
+
   return `
-    <div style="position:relative">
+    <div style="position:relative;width:30px;height:30px">
       <div style="
         width:30px;height:30px;border-radius:9999px;
-        background:${meta.color};${ring}
-        border:2px solid white;display:flex;align-items:center;justify-content:center;
+        background:${type.color};${border}${ring}
+        display:flex;align-items:center;justify-content:center;
         font-size:16px;line-height:1">
-        ${meta.emoji}
+        ${type.emoji}
       </div>
-      ${flag}
+      ${healthDot}${attentionFlag}${featureSpark}${observedStar}
     </div>`;
 }
 

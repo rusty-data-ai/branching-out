@@ -5,7 +5,7 @@ import L from "leaflet";
 import { useEffect } from "react";
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import type { Tree } from "@/lib/database.types";
-import { treeMarkerHtml } from "@/lib/format";
+import { plantMarkerHtml } from "@/lib/format";
 
 export interface FlyTarget {
   lat: number;
@@ -28,9 +28,14 @@ interface MapViewProps {
 
 function treeIcon(tree: Tree, selected: boolean) {
   return L.divIcon({
-    html: `<div style="transform:${selected ? "scale(1.25)" : "scale(1)"};transition:transform .1s">${treeMarkerHtml(
-      tree.health_status,
-      tree.needs_attention
+    html: `<div style="transform:${selected ? "scale(1.25)" : "scale(1)"};transition:transform .1s">${plantMarkerHtml(
+      {
+        plantType: tree.plant_type,
+        healthStatus: tree.health_status,
+        needsAttention: tree.needs_attention,
+        origin: tree.origin,
+        hasFeatures: tree.features.length > 0,
+      }
     )}</div>`,
     className: "tree-marker",
     iconSize: [30, 30],

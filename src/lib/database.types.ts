@@ -3,6 +3,17 @@
 
 export type HealthStatus = "thriving" | "healthy" | "struggling" | "dead";
 
+export type PlantType =
+  | "tree"
+  | "wildflower"
+  | "shrub"
+  | "hedge"
+  | "fruit_bush"
+  | "climber"
+  | "other";
+
+export type PlantOrigin = "planted" | "observed";
+
 export type CareAction =
   | "watered"
   | "checked"
@@ -31,6 +42,13 @@ export interface Database {
           longitude: number;
           health_status: HealthStatus;
           needs_attention: boolean;
+          plant_type: PlantType;
+          origin: PlantOrigin;
+          area_note: string | null;
+          features: string[];
+          notability: string | null;
+          is_veteran: boolean;
+          approx_age: string | null;
           created_by: string;
           created_at: string;
         };
@@ -44,6 +62,13 @@ export interface Database {
           longitude: number;
           health_status?: HealthStatus;
           needs_attention?: boolean;
+          plant_type?: PlantType;
+          origin?: PlantOrigin;
+          area_note?: string | null;
+          features?: string[];
+          notability?: string | null;
+          is_veteran?: boolean;
+          approx_age?: string | null;
           created_by: string;
           created_at?: string;
         };

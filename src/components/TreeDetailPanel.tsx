@@ -14,7 +14,9 @@ import {
 import {
   CARE_ACTION_META,
   HEALTH_OPTIONS,
+  PLANT_TYPE_META,
   STATUS_META,
+  featureLabel,
   formatDate,
   formatDateTime,
 } from "@/lib/format";
@@ -44,6 +46,10 @@ export default function TreeDetailPanel({
   const fileRef = useRef<HTMLInputElement>(null);
 
   const meta = STATUS_META[tree.health_status];
+  const typeMeta = PLANT_TYPE_META[tree.plant_type];
+  const observed = tree.origin === "observed";
+  const title =
+    tree.species && tree.species !== "Unknown" ? tree.species : typeMeta.label;
   const isOwner = tree.created_by === currentUserId;
 
   useEffect(() => {
@@ -146,19 +152,29 @@ export default function TreeDetailPanel({
       <div className="flex items-start justify-between border-b border-stone-200 px-4 py-3">
         <div>
           <h2 className="text-lg font-semibold text-stone-900">
-            {meta.emoji} {tree.species}
+            {typeMeta.emoji} {title}
           </h2>
-          <span
-            className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-white"
-            style={{ background: meta.color }}
-          >
-            {meta.label}
-          </span>
-          {tree.needs_attention && (
-            <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
-              🚩 Needs attention
+          <div className="mt-1 flex flex-wrap gap-1">
+            <span className="inline-flex items-center gap-1 rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-600">
+              {typeMeta.emoji} {typeMeta.label}
             </span>
-          )}
+            {observed && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                ⭐ Of interest
+              </span>
+            )}
+            <span
+              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-white"
+              style={{ background: meta.color }}
+            >
+              {meta.label}
+            </span>
+            {tree.needs_attention && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                🚩 Needs attention
+              </span>
+            )}
+          </div>
         </div>
         <button
           onClick={onClose}
@@ -172,14 +188,49 @@ export default function TreeDetailPanel({
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-4">
         {/* Facts */}
         <dl className="space-y-1.5 text-sm">
-          <div className="flex gap-2">
-            <dt className="w-28 shrink-0 text-stone-500">Planted</dt>
-            <dd className="text-stone-800">{formatDate(tree.planted_on)}</dd>
-          </div>
-          <div className="flex gap-2">
-            <dt className="w-28 shrink-0 text-stone-500">Planted by</dt>
-            <dd className="text-stone-800">{tree.planted_by_name}</dd>
-          </div>
+          {observed ? (
+            <>
+              {tree.notability && (
+                <div className="flex gap-2">
+                  <dt className="w-28 shrink-0 text-stone-500">Why notable</dt>
+                  <dd className="whitespace-pre-wrap text-stone-800">
+                    {tree.notability}
+                  </dd>
+                </div>
+              )}
+              {(tree.approx_age || tree.is_veteran) && (
+                <div className="flex gap-2">
+                  <dt className="w-28 shrink-0 text-stone-500">Age</dt>
+                  <dd className="text-stone-800">
+                    {[tree.is_veteran ? "⭐ Veteran / ancient" : null, tree.approx_age]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </dd>
+                </div>
+              )}
+              <div className="flex gap-2">
+                <dt className="w-28 shrink-0 text-stone-500">Recorded as</dt>
+                <dd className="text-stone-800">{tree.planted_by_name}</dd>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex gap-2">
+                <dt className="w-28 shrink-0 text-stone-500">Planted</dt>
+                <dd className="text-stone-800">{formatDate(tree.planted_on)}</dd>
+              </div>
+              <div className="flex gap-2">
+                <dt className="w-28 shrink-0 text-stone-500">Planted by</dt>
+                <dd className="text-stone-800">{tree.planted_by_name}</dd>
+              </div>
+            </>
+          )}
+          {tree.area_note && (
+            <div className="flex gap-2">
+              <dt className="w-28 shrink-0 text-stone-500">Area / size</dt>
+              <dd className="text-stone-800">{tree.area_note}</dd>
+            </div>
+          )}
           <div className="flex gap-2">
             <dt className="w-28 shrink-0 text-stone-500">Location</dt>
             <dd className="font-mono text-xs text-stone-700">
@@ -203,6 +254,28 @@ export default function TreeDetailPanel({
 
         {error && (
           <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+        )}
+
+        {/* Fun features */}
+        {tree.features.length > 0 && (
+          <div>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-500">
+              ✨ Fun features
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {tree.features.map((f) => {
+                const m = featureLabel(f);
+                return (
+                  <span
+                    key={f}
+                    className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800"
+                  >
+                    {m.emoji} {m.label}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
         )}
 
         {/* Maintenance actions */}

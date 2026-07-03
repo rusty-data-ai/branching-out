@@ -27,11 +27,24 @@ create table if not exists public.trees (
   health_status    text not null default 'healthy'
                      check (health_status in ('thriving','healthy','struggling','dead')),
   needs_attention  boolean not null default false,
+  -- Kind of plant (issue #1) and whether it was planted by a member or just
+  -- observed / of interest (issue #3), plus fun features for kids (issue #2).
+  plant_type       text not null default 'tree'
+                     check (plant_type in ('tree','wildflower','shrub','hedge','fruit_bush','climber','other')),
+  origin           text not null default 'planted'
+                     check (origin in ('planted','observed')),
+  area_note        text,
+  features         text[] not null default '{}',
+  notability       text,
+  is_veteran       boolean not null default false,
+  approx_age       text,
   created_by       uuid not null references auth.users (id) on delete cascade,
   created_at       timestamptz not null default now()
 );
 
 create index if not exists trees_created_by_idx on public.trees (created_by);
+create index if not exists trees_plant_type_idx on public.trees (plant_type);
+create index if not exists trees_origin_idx     on public.trees (origin);
 
 -- ---------------------------------------------------------------------
 -- 3. care_logs  (dated maintenance / care timeline per tree)

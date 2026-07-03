@@ -17,8 +17,9 @@ export default async function Home() {
           Guerilla Planter
         </h1>
         <p className="mt-4 text-lg text-stone-600">
-          Map the trees you plant in the wild, then come back to water, check and
-          care for them. A shared registry so no sapling gets forgotten.
+          Map the trees and plants you put in the wild — and the notable ones you
+          spot — then come back to water, check and care for them. A shared registry
+          so no sapling gets forgotten.
         </p>
 
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
