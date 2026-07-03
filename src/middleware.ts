@@ -2,7 +2,7 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Routes that require a signed-in, confirmed user.
-const PROTECTED_PREFIXES = ["/map"];
+const PROTECTED_PREFIXES = ["/map", "/account"];
 // Routes only for signed-out users.
 const AUTH_ROUTES = ["/login", "/signup"];
 

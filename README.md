@@ -1,4 +1,4 @@
-# 🌳 Guerilla Planting
+# 🌳 Guerilla Planter
 
 A small web app for guerilla gardeners to **map, track and care for the trees they plant**.
 

@@ -14,7 +14,7 @@ export default async function Home() {
       <div className="max-w-xl">
         <div className="mb-4 text-6xl">🌳</div>
         <h1 className="text-3xl font-bold tracking-tight text-stone-900 sm:text-4xl">
-          Guerilla Planting
+          Guerilla Planter
         </h1>
         <p className="mt-4 text-lg text-stone-600">
           Map the trees you plant in the wild, then come back to water, check and
