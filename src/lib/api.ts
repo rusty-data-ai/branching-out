@@ -1,8 +1,11 @@
 import { createClient } from "@/lib/supabase/client";
+import { normalizeTree } from "@/lib/format";
 import type {
   CareAction,
   CareLog,
   HealthStatus,
+  PlantOrigin,
+  PlantType,
   Tree,
   TreePhoto,
 } from "@/lib/database.types";
@@ -16,7 +19,7 @@ export async function fetchTrees(): Promise<Tree[]> {
     .select("*")
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []).map(normalizeTree);
 }
 
 export interface NewTreeInput {
@@ -27,6 +30,13 @@ export interface NewTreeInput {
   latitude: number;
   longitude: number;
   health_status: HealthStatus;
+  plant_type: PlantType;
+  origin: PlantOrigin;
+  area_note: string | null;
+  features: string[];
+  notability: string | null;
+  is_veteran: boolean;
+  approx_age: string | null;
 }
 
 export async function createTree(

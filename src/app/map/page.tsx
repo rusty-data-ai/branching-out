@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import MapApp from "@/components/MapApp";
+import { normalizeTree } from "@/lib/format";
 import type { Tree } from "@/lib/database.types";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +29,7 @@ export default async function MapPage() {
     (user.user_metadata?.display_name as string | undefined) ||
     "Anonymous planter";
 
-  return (
-    <MapApp user={{ id: user.id, name }} initialTrees={(trees as Tree[]) ?? []} />
-  );
+  const initialTrees = ((trees as Tree[]) ?? []).map(normalizeTree);
+
+  return <MapApp user={{ id: user.id, name }} initialTrees={initialTrees} />;
 }

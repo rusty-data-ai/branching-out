@@ -4,9 +4,10 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Tree } from "@/lib/database.types";
+import type { PlantOrigin, PlantType, Tree } from "@/lib/database.types";
 import { createTree, type NewTreeInput } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
+import { PLANT_TYPE_META, PLANT_TYPE_OPTIONS } from "@/lib/format";
 import type { FlyTarget } from "@/components/MapView";
 import AddTreePanel from "@/components/AddTreePanel";
 import TreeDetailPanel from "@/components/TreeDetailPanel";
@@ -39,6 +40,25 @@ export default function MapApp({ user, initialTrees }: MapAppProps) {
   const [flyTo, setFlyTo] = useState<FlyTarget | null>(null);
   const [addCollapsed, setAddCollapsed] = useState(false);
   const flyNonce = useRef(0);
+
+  // Filters
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterOrigin, setFilterOrigin] = useState<PlantOrigin | "all">("all");
+  const [filterType, setFilterType] = useState<PlantType | "all">("all");
+  const [featuresOnly, setFeaturesOnly] = useState(false);
+  const filtersActive =
+    filterOrigin !== "all" || filterType !== "all" || featuresOnly;
+
+  const filteredTrees = useMemo(
+    () =>
+      trees.filter((t) => {
+        if (filterOrigin !== "all" && t.origin !== filterOrigin) return false;
+        if (filterType !== "all" && t.plant_type !== filterType) return false;
+        if (featuresOnly && t.features.length === 0) return false;
+        return true;
+      }),
+    [trees, filterOrigin, filterType, featuresOnly]
+  );
 
   const initialCenter = useMemo<[number, number]>(() => {
     if (initialTrees.length === 0) return DEFAULT_CENTER;
@@ -143,7 +163,8 @@ export default function MapApp({ user, initialTrees }: MapAppProps) {
           <span className="text-xl">🌳</span>
           <span className="font-semibold text-stone-900">Guerilla Planter</span>
           <span className="hidden text-sm text-stone-400 sm:inline">
-            · {trees.length} {trees.length === 1 ? "tree" : "trees"}
+            · {filtersActive ? `${filteredTrees.length}/${trees.length}` : trees.length}{" "}
+            {trees.length === 1 ? "plant" : "plants"}
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -163,10 +184,97 @@ export default function MapApp({ user, initialTrees }: MapAppProps) {
         </div>
       </header>
 
+      {/* Filters */}
+      {mode !== "add" && (
+        <div className="absolute left-3 top-14 z-[900]">
+          <button
+            onClick={() => setShowFilters((s) => !s)}
+            className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm font-medium shadow-sm ${
+              filtersActive
+                ? "border-green-600 bg-green-50 text-green-800"
+                : "border-stone-300 bg-white text-stone-700"
+            }`}
+          >
+            ⚲ Filter{filtersActive ? " •" : ""}
+          </button>
+          {showFilters && (
+            <div className="mt-2 w-64 rounded-xl border border-stone-200 bg-white p-3 shadow-lg">
+              <div className="mb-3">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-stone-500">
+                  Origin
+                </p>
+                <div className="grid grid-cols-3 gap-1">
+                  {(
+                    [
+                      ["all", "All"],
+                      ["planted", "🦍 Planted"],
+                      ["observed", "👀 Interest"],
+                    ] as const
+                  ).map(([val, label]) => (
+                    <button
+                      key={val}
+                      onClick={() => setFilterOrigin(val)}
+                      className={`rounded-lg border px-1.5 py-1 text-xs font-medium ${
+                        filterOrigin === val
+                          ? "border-green-600 bg-green-50 text-green-800"
+                          : "border-stone-300 bg-white text-stone-600 hover:bg-stone-50"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mb-3">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-stone-500">
+                  Type
+                </p>
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value as PlantType | "all")}
+                  className="w-full rounded-lg border border-stone-300 px-2 py-1.5 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
+                >
+                  <option value="all">All types</option>
+                  {PLANT_TYPE_OPTIONS.map((t) => (
+                    <option key={t} value={t}>
+                      {PLANT_TYPE_META[t].emoji} {PLANT_TYPE_META[t].label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <label className="flex items-center gap-2 text-sm text-stone-700">
+                <input
+                  type="checkbox"
+                  checked={featuresOnly}
+                  onChange={(e) => setFeaturesOnly(e.target.checked)}
+                  className="h-4 w-4 rounded border-stone-300 text-green-700 focus:ring-green-600"
+                />
+                ✨ Only fun features
+              </label>
+
+              {filtersActive && (
+                <button
+                  onClick={() => {
+                    setFilterOrigin("all");
+                    setFilterType("all");
+                    setFeaturesOnly(false);
+                  }}
+                  className="mt-3 w-full rounded-lg border border-stone-300 px-2 py-1.5 text-sm text-stone-600 hover:bg-stone-50"
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Map */}
       <div className="absolute inset-0">
         <MapView
-          trees={trees}
+          trees={filteredTrees}
           selectedId={selectedId}
           onSelectTree={handleSelect}
           addMode={mode === "add"}
@@ -193,7 +301,7 @@ export default function MapApp({ user, initialTrees }: MapAppProps) {
           onClick={startAdd}
           className="absolute bottom-6 right-5 z-[900] flex items-center gap-2 rounded-full bg-green-700 px-5 py-3 font-semibold text-white shadow-lg transition hover:bg-green-800"
         >
-          <span className="text-lg leading-none">＋</span> Add tree
+          <span className="text-lg leading-none">＋</span> Add plant
         </button>
       )}
 

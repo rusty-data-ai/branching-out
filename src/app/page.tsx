@@ -17,8 +17,9 @@ export default async function Home() {
           Guerilla Planter
         </h1>
         <p className="mt-4 text-lg text-stone-600">
-          Map the trees you plant in the wild, then come back to water, check and
-          care for them. A shared registry so no sapling gets forgotten.
+          Map the trees and plants you put in the wild — and the notable ones you
+          spot — then come back to water, check and care for them. A shared registry
+          so no sapling gets forgotten.
         </p>
 
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -56,6 +57,14 @@ export default async function Home() {
           </li>
           <li className="flex gap-2">
             <span>📷</span> Add photos and track each tree&apos;s health over time.
+          </li>
+          <li className="flex gap-2">
+            <span>⭐</span> Add plants of interest — ancient trees and more unusual
+            species worth admiring, not just ones you planted.
+          </li>
+          <li className="flex gap-2">
+            <span>🗺️</span> Find kid-friendly trees and plants, and print a paper
+            treasure map so children can track them down — no phone needed.
           </li>
         </ul>
       </div>
