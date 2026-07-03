@@ -182,7 +182,7 @@ export default function AddTreePanel({
                   : "border-stone-300 bg-white text-stone-600 hover:bg-stone-50"
               }`}
             >
-              🌱 I planted this
+              🦍 I planted this
             </button>
             <button
               type="button"
@@ -193,7 +193,7 @@ export default function AddTreePanel({
                   : "border-stone-300 bg-white text-stone-600 hover:bg-stone-50"
               }`}
             >
-              ⭐ Of interest
+              👀 Of interest
             </button>
           </div>
           {observed && (

@@ -207,8 +207,8 @@ export default function MapApp({ user, initialTrees }: MapAppProps) {
                   {(
                     [
                       ["all", "All"],
-                      ["planted", "🌱 Planted"],
-                      ["observed", "⭐ Interest"],
+                      ["planted", "🦍 Planted"],
+                      ["observed", "👀 Interest"],
                     ] as const
                   ).map(([val, label]) => (
                     <button

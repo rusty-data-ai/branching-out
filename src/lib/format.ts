@@ -121,9 +121,8 @@ export interface MarkerSpec {
 export function plantMarkerHtml(spec: MarkerSpec): string {
   const type = PLANT_TYPE_META[spec.plantType];
   const health = STATUS_META[spec.healthStatus];
-  const observed = spec.origin === "observed";
+  const planted = spec.origin === "planted";
 
-  const border = observed ? "border:3px dashed #f59e0b;" : "border:2px solid white;";
   const ring = spec.needsAttention ? "box-shadow:0 0 0 3px #dc2626;" : "";
 
   const attentionFlag = spec.needsAttention
@@ -132,8 +131,10 @@ export function plantMarkerHtml(spec: MarkerSpec): string {
   const featureSpark = spec.hasFeatures
     ? `<span style="position:absolute;top:-7px;left:-7px;font-size:12px;line-height:1">✨</span>`
     : "";
-  const observedStar = observed
-    ? `<span style="position:absolute;bottom:-7px;left:-7px;font-size:11px;line-height:1">⭐</span>`
+  // Guerilla-planted plants get a gorilla badge; "of interest" plants are the
+  // plain default (no badge).
+  const gorillaBadge = planted
+    ? `<span style="position:absolute;bottom:-8px;left:-8px;font-size:15px;line-height:1;filter:drop-shadow(0 0 1px white) drop-shadow(0 0 1px white)">🦍</span>`
     : "";
   const healthDot = `<span style="position:absolute;bottom:-2px;right:-2px;width:10px;height:10px;border-radius:9999px;background:${health.color};border:2px solid white"></span>`;
 
@@ -141,12 +142,12 @@ export function plantMarkerHtml(spec: MarkerSpec): string {
     <div style="position:relative;width:30px;height:30px">
       <div style="
         width:30px;height:30px;border-radius:9999px;
-        background:${type.color};${border}${ring}
+        background:${type.color};border:2px solid white;${ring}
         display:flex;align-items:center;justify-content:center;
         font-size:16px;line-height:1">
         ${type.emoji}
       </div>
-      ${healthDot}${attentionFlag}${featureSpark}${observedStar}
+      ${healthDot}${attentionFlag}${featureSpark}${gorillaBadge}
     </div>`;
 }
 

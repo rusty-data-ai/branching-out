@@ -159,9 +159,9 @@ export default function TreeDetailPanel({
             <span className="inline-flex items-center gap-1 rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-600">
               {typeMeta.emoji} {typeMeta.label}
             </span>
-            {observed && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
-                ⭐ Of interest
+            {!observed && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+                🦍 Guerilla planted
               </span>
             )}
             <span
