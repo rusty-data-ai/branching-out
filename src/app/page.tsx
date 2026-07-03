@@ -58,6 +58,14 @@ export default async function Home() {
           <li className="flex gap-2">
             <span>📷</span> Add photos and track each tree&apos;s health over time.
           </li>
+          <li className="flex gap-2">
+            <span>⭐</span> Add plants of interest — ancient trees and more unusual
+            species worth admiring, not just ones you planted.
+          </li>
+          <li className="flex gap-2">
+            <span>🗺️</span> Find kid-friendly trees and plants, and print a paper
+            treasure map so children can track them down — no phone needed.
+          </li>
         </ul>
       </div>
     </main>
