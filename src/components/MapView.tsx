@@ -61,6 +61,24 @@ function ClickHandler({
   return null;
 }
 
+/** Fixes the "patchwork of grey tiles" that happens when the map mounts before
+ *  its container has its final size — recalculates once things settle, and on resize. */
+function InvalidateSize() {
+  const map = useMap();
+  useEffect(() => {
+    const fix = () => map.invalidateSize();
+    const t1 = setTimeout(fix, 150);
+    const t2 = setTimeout(fix, 600);
+    window.addEventListener("resize", fix);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      window.removeEventListener("resize", fix);
+    };
+  }, [map]);
+  return null;
+}
+
 /** Imperatively flies the map when `flyTo.nonce` changes. */
 function FlyController({ flyTo }: { flyTo: FlyTarget | null }) {
   const map = useMap();
@@ -99,6 +117,7 @@ export default function MapView({
         maxZoom={19}
       />
 
+      <InvalidateSize />
       <ClickHandler addMode={addMode} onDraftChange={onDraftChange} />
       <FlyController flyTo={flyTo} />
 

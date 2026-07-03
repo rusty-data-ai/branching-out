@@ -11,6 +11,7 @@ interface AddTreePanelProps {
   gpsError: string | null;
   defaultPlanter: string;
   onUseGps: () => void;
+  onPickOnMap: () => void;
   onSubmit: (input: NewTreeInput) => Promise<void>;
   onCancel: () => void;
 }
@@ -28,6 +29,7 @@ export default function AddTreePanel({
   gpsError,
   defaultPlanter,
   onUseGps,
+  onPickOnMap,
   onSubmit,
   onCancel,
 }: AddTreePanelProps) {
@@ -68,7 +70,7 @@ export default function AddTreePanel({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex h-full flex-col">
+    <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
       <div className="flex items-center justify-between border-b border-stone-200 px-4 py-3">
         <h2 className="text-lg font-semibold text-stone-900">🌱 Add a tree</h2>
         <button
@@ -80,11 +82,21 @@ export default function AddTreePanel({
         </button>
       </div>
 
-      <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
         {/* Location */}
         <div className="rounded-lg border border-stone-200 bg-stone-50 p-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-stone-700">Location</span>
+          <span className="text-sm font-medium text-stone-700">Location</span>
+          {draft ? (
+            <p className="mt-1 font-mono text-xs text-stone-600">
+              📍 {draft.lat.toFixed(6)}, {draft.lng.toFixed(6)}
+            </p>
+          ) : (
+            <p className="mt-1 text-xs text-stone-500">
+              Use your GPS, or pick the spot on the map. You can drag the pin to
+              fine-tune.
+            </p>
+          )}
+          <div className="mt-2 grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={onUseGps}
@@ -93,18 +105,15 @@ export default function AddTreePanel({
             >
               {gpsLoading ? "Locating…" : "📍 Use my GPS"}
             </button>
+            <button
+              type="button"
+              onClick={onPickOnMap}
+              className="rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-100"
+            >
+              🗺️ Pick on map
+            </button>
           </div>
-          {draft ? (
-            <p className="mt-2 font-mono text-xs text-stone-600">
-              {draft.lat.toFixed(6)}, {draft.lng.toFixed(6)}
-            </p>
-          ) : (
-            <p className="mt-2 text-xs text-stone-500">
-              Tap “Use my GPS”, or tap anywhere on the map to drop a pin. You can drag
-              the pin to fine-tune.
-            </p>
-          )}
-          {gpsError && <p className="mt-1 text-xs text-red-600">{gpsError}</p>}
+          {gpsError && <p className="mt-2 text-xs text-red-600">{gpsError}</p>}
         </div>
 
         <div>

@@ -36,6 +36,7 @@ export default function MapApp({ user, initialTrees }: MapAppProps) {
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [flyTo, setFlyTo] = useState<FlyTarget | null>(null);
+  const [addCollapsed, setAddCollapsed] = useState(false);
   const flyNonce = useRef(0);
 
   const initialCenter = useMemo<[number, number]>(() => {
@@ -67,6 +68,7 @@ export default function MapApp({ user, initialTrees }: MapAppProps) {
     setSelectedId(null);
     setMode("add");
     setDraft(null);
+    setAddCollapsed(false);
     requestGps();
   }
 
@@ -74,6 +76,7 @@ export default function MapApp({ user, initialTrees }: MapAppProps) {
     setMode("idle");
     setDraft(null);
     setGpsError(null);
+    setAddCollapsed(false);
   }
 
   function requestGps() {
@@ -107,6 +110,7 @@ export default function MapApp({ user, initialTrees }: MapAppProps) {
     setTrees((prev) => [tree, ...prev]);
     setMode("idle");
     setDraft(null);
+    setAddCollapsed(false);
     setSelectedId(tree.id);
   }
 
@@ -127,6 +131,8 @@ export default function MapApp({ user, initialTrees }: MapAppProps) {
   }
 
   const panelOpen = mode === "add" || selectedTree !== null;
+  const addCollapsedBar = mode === "add" && addCollapsed;
+  const showFullPanel = panelOpen && !addCollapsedBar;
 
   return (
     <div className="relative h-[100dvh] w-full overflow-hidden">
@@ -165,11 +171,11 @@ export default function MapApp({ user, initialTrees }: MapAppProps) {
         />
       </div>
 
-      {/* Add-mode hint */}
-      {mode === "add" && (
+      {/* Add-mode hint — only while picking a spot on the (visible) map */}
+      {addCollapsedBar && (
         <div className="pointer-events-none absolute inset-x-0 top-14 z-[900] flex justify-center px-4">
           <div className="rounded-full bg-stone-900/85 px-4 py-1.5 text-sm text-white shadow">
-            Tap the map to place the pin, or use GPS →
+            Tap the map to place the pin
           </div>
         </div>
       )}
@@ -184,9 +190,35 @@ export default function MapApp({ user, initialTrees }: MapAppProps) {
         </button>
       )}
 
+      {/* Collapsed add bar: shown while the user is picking a location on the map */}
+      {addCollapsedBar && (
+        <div className="absolute inset-x-0 bottom-0 z-[1000] border-t border-stone-200 bg-white p-3 shadow-2xl md:left-auto md:right-0 md:w-96 md:rounded-l-2xl md:border">
+          <p className="text-center text-sm text-stone-700">
+            {draft
+              ? `📍 Pin set — ${draft.lat.toFixed(5)}, ${draft.lng.toFixed(5)}`
+              : "Tap the map to place the pin"}
+          </p>
+          <div className="mt-2 flex gap-2">
+            <button
+              onClick={requestGps}
+              disabled={gpsLoading}
+              className="flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-50 disabled:opacity-60"
+            >
+              {gpsLoading ? "Locating…" : "📍 Use my GPS"}
+            </button>
+            <button
+              onClick={() => setAddCollapsed(false)}
+              className="flex-1 rounded-lg bg-green-700 px-3 py-2 text-sm font-semibold text-white hover:bg-green-800"
+            >
+              Back to details →
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Panel: bottom sheet on mobile, right drawer on desktop */}
-      {panelOpen && (
-        <div className="absolute inset-x-0 bottom-0 z-[1000] max-h-[78vh] overflow-hidden rounded-t-2xl bg-white shadow-2xl ring-1 ring-stone-200 md:inset-y-0 md:left-auto md:right-0 md:max-h-none md:w-96 md:rounded-none md:rounded-l-2xl md:pt-12">
+      {showFullPanel && (
+        <div className="absolute inset-x-0 bottom-0 z-[1000] flex max-h-[80vh] flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl ring-1 ring-stone-200 md:inset-y-0 md:left-auto md:right-0 md:max-h-none md:w-96 md:rounded-none md:rounded-l-2xl md:pt-12">
           {mode === "add" ? (
             <AddTreePanel
               draft={draft}
@@ -194,6 +226,7 @@ export default function MapApp({ user, initialTrees }: MapAppProps) {
               gpsError={gpsError}
               defaultPlanter={user.name}
               onUseGps={requestGps}
+              onPickOnMap={() => setAddCollapsed(true)}
               onSubmit={submitTree}
               onCancel={cancelAdd}
             />

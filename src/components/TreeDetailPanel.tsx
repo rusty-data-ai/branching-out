@@ -141,7 +141,7 @@ export default function TreeDetailPanel({
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       {/* Header */}
       <div className="flex items-start justify-between border-b border-stone-200 px-4 py-3">
         <div>
@@ -169,7 +169,7 @@ export default function TreeDetailPanel({
         </button>
       </div>
 
-      <div className="flex-1 space-y-5 overflow-y-auto px-4 py-4">
+      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-4">
         {/* Facts */}
         <dl className="space-y-1.5 text-sm">
           <div className="flex gap-2">
