@@ -63,6 +63,22 @@ begin
 end
 $$;
 
+-- 3. Backfill empty-string token columns.
+--    A raw SQL insert leaves these NULL, but GoTrue scans them into Go
+--    strings and fails with "Database error querying schema" at sign-in.
+--    Setting them to '' fixes it. Safe to run repeatedly — this also repairs
+--    a test user that was created before this block was added.
+update auth.users set
+  confirmation_token          = coalesce(confirmation_token, ''),
+  recovery_token              = coalesce(recovery_token, ''),
+  email_change                = coalesce(email_change, ''),
+  email_change_token_new      = coalesce(email_change_token_new, ''),
+  email_change_token_current  = coalesce(email_change_token_current, ''),
+  phone_change                = coalesce(phone_change, ''),
+  phone_change_token          = coalesce(phone_change_token, ''),
+  reauthentication_token      = coalesce(reauthentication_token, '')
+where email = 'test@guerilla.test';
+
 -- ---------------------------------------------------------------------
 -- To REMOVE the test user later, run just this line (cascades to their
 -- profile, trees, care logs and photos):
