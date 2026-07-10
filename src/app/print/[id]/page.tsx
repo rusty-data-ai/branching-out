@@ -32,6 +32,24 @@ export default function PrintPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [start, setStart] = useState<LatLng | null>(null);
   const [locState, setLocState] = useState<"loading" | "denied" | "ok">("loading");
+  const [mode, setMode] = useState<"gps" | "manual">("gps");
+
+  function locateMe() {
+    setMode("gps");
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setLocState("denied");
+      return;
+    }
+    setLocState("loading");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setStart({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocState("ok");
+      },
+      () => setLocState("denied"),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
 
   useEffect(() => {
     const supabase = createClient();
@@ -47,18 +65,9 @@ export default function PrintPage() {
   }, [id]);
 
   useEffect(() => {
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setLocState("denied");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setStart({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setLocState("ok");
-      },
-      () => setLocState("denied"),
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+    // Auto-try GPS on load; the user can switch to picking a start manually.
+    locateMe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loadError) {
@@ -112,16 +121,59 @@ export default function PrintPage() {
           </p>
         </header>
 
+        {/* Start-point chooser (screen only) */}
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2 print:hidden">
+          <span className="text-sm font-medium text-amber-900">Start point:</span>
+          <button
+            onClick={locateMe}
+            className={`rounded-full px-3 py-1 text-sm font-semibold transition ${
+              mode === "gps"
+                ? "bg-green-700 text-white"
+                : "bg-white text-amber-900 ring-1 ring-amber-700/40 hover:bg-amber-100"
+            }`}
+          >
+            📡 Use my GPS
+          </button>
+          <button
+            onClick={() => setMode("manual")}
+            className={`rounded-full px-3 py-1 text-sm font-semibold transition ${
+              mode === "manual"
+                ? "bg-green-700 text-white"
+                : "bg-white text-amber-900 ring-1 ring-amber-700/40 hover:bg-amber-100"
+            }`}
+          >
+            📍 Pick on map
+          </button>
+          {mode === "manual" && start && (
+            <button
+              onClick={() => setStart(null)}
+              className="rounded-full px-3 py-1 text-sm font-medium text-amber-800 hover:underline"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
         <div className="my-4 h-80 overflow-hidden rounded-xl border border-amber-700/30">
-          <PrintMap start={start} target={target} targetEmoji={typeMeta.emoji} />
+          <PrintMap
+            start={start}
+            target={target}
+            targetEmoji={typeMeta.emoji}
+            onPick={mode === "manual" ? (ll) => setStart(ll) : undefined}
+          />
         </div>
 
         {/* Directions */}
         <div className="text-center text-sm text-amber-900">
-          {locState === "loading" && <p>Finding your location…</p>}
+          {mode === "manual" && !start && (
+            <p className="print:hidden">
+              👆 Tap the map to set your start point (the 🧭).
+            </p>
+          )}
+          {mode === "gps" && locState === "loading" && <p>Finding your location…</p>}
           {start && dist != null && dir && (
             <p>
-              🧭 Start where you are (the 🧭), then head{" "}
+              🧭 Start at the 🧭, then head{" "}
               <strong>
                 {dir.name} {dir.arrow}
               </strong>{" "}
@@ -129,11 +181,11 @@ export default function PrintPage() {
               ❌.
             </p>
           )}
-          {locState === "denied" && (
+          {mode === "gps" && locState === "denied" && !start && (
             <p className="text-amber-800/80">
               (We couldn&apos;t get your location — the map shows where the{" "}
-              {typeMeta.label.toLowerCase()} is. Turn on location and reload for a
-              start point.)
+              {typeMeta.label.toLowerCase()} is. Turn on location, or use{" "}
+              <strong>📍 Pick on map</strong> to set a start point.)
             </p>
           )}
         </div>
