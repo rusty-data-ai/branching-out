@@ -5,6 +5,12 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+// Convenience test login: typing "test" in the email field (with password
+// "test") signs in as the shared test account, whose real address is below.
+// Create it once by running supabase/migrations/003_test_user.sql.
+const TEST_USERNAME = "test";
+const TEST_EMAIL = "test@guerilla.test";
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -21,7 +27,13 @@ function LoginForm() {
     setError(null);
     setLoading(true);
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const entered = email.trim();
+    const resolvedEmail =
+      entered.toLowerCase() === TEST_USERNAME ? TEST_EMAIL : entered;
+    const { error } = await supabase.auth.signInWithPassword({
+      email: resolvedEmail,
+      password,
+    });
     if (error) {
       setError(
         error.message === "Email not confirmed"
@@ -54,7 +66,8 @@ function LoginForm() {
           <div>
             <label className="block text-sm font-medium text-stone-700">Email</label>
             <input
-              type="email"
+              type="text"
+              inputMode="email"
               required
               autoComplete="email"
               value={email}

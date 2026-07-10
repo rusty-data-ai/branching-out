@@ -3,7 +3,14 @@
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect } from "react";
-import { MapContainer, Marker, Polyline, TileLayer, useMap } from "react-leaflet";
+import {
+  MapContainer,
+  Marker,
+  Polyline,
+  TileLayer,
+  useMap,
+  useMapEvents,
+} from "react-leaflet";
 import type { LatLng } from "@/lib/geo";
 
 const startIcon = L.divIcon({
@@ -24,15 +31,30 @@ function targetIcon(emoji: string) {
 
 function Fit({ points }: { points: [number, number][] }) {
   const map = useMap();
+  // Refit only when the *number* of points changes (i.e. a start first
+  // appears), not on every pick — so nudging the start point doesn't yank the
+  // map around while the user is placing it.
+  const hasStart = points.length > 1;
+  const target = points[points.length - 1].join(",");
   useEffect(() => {
-    if (points.length === 1) {
-      map.setView(points[0], 17);
+    if (!hasStart) {
+      map.setView(points[points.length - 1], 17);
     } else {
       map.fitBounds(points, { padding: [40, 40], maxZoom: 17 });
     }
     const t = setTimeout(() => map.invalidateSize(), 250);
     return () => clearTimeout(t);
-  }, [map, points]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, hasStart, target]);
+  return null;
+}
+
+function PickHandler({ onPick }: { onPick: (ll: LatLng) => void }) {
+  useMapEvents({
+    click(e) {
+      onPick({ lat: e.latlng.lat, lng: e.latlng.lng });
+    },
+  });
   return null;
 }
 
@@ -40,9 +62,10 @@ interface PrintMapProps {
   start: LatLng | null;
   target: LatLng;
   targetEmoji: string;
+  onPick?: (ll: LatLng) => void;
 }
 
-export default function PrintMap({ start, target, targetEmoji }: PrintMapProps) {
+export default function PrintMap({ start, target, targetEmoji, onPick }: PrintMapProps) {
   const points: [number, number][] = start
     ? [
         [start.lat, start.lng],
@@ -63,6 +86,7 @@ export default function PrintMap({ start, target, targetEmoji }: PrintMapProps) 
         maxZoom={19}
       />
       <Fit points={points} />
+      {onPick && <PickHandler onPick={onPick} />}
       {start && (
         <Polyline
           positions={[
