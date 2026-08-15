@@ -1,90 +1,72 @@
 # 🌳 Guerilla Planter
 
-A small web app for guerilla gardeners to **map, track and care for the trees they plant**.
+A web app for guerilla gardeners to **map, track and care for the trees they plant** —
+add a tree with your phone's GPS, log watering and check-ups, and flag saplings that
+need attention, so they actually survive.
+
+**Live demo:** <https://guerilla-planter.vercel.app>
+
+## What this demonstrates
+
+- **Full-stack TypeScript** — Next.js (App Router) with server-loaded data,
+  protected routes via middleware, and typed database access end to end.
+- **Backend-as-a-service done properly** — Supabase auth (email confirmation),
+  Postgres with **Row Level Security**, storage for photos, and a signup trigger —
+  the whole schema ships as one idempotent [`supabase/schema.sql`](./supabase/schema.sql).
+- **Maps & geolocation UX** — Leaflet + OpenStreetMap (no API key), browser
+  Geolocation API with a tap-the-map fallback, health-coded markers.
+- **Product thinking** — collaborative care logs, needs-attention flags, photo
+  history; documented handover (`HANDOVER.md`) and deployment (`DEPLOY.md`) guides.
+
+## Features
 
 - Sign up with an email-confirmed account (no anonymous edits).
 - See every recorded tree on an interactive map.
 - Tap a tree for its species, planting date, who planted it, notes, photos and care history.
 - Add a tree using your **phone's GPS** (or by tapping the map), so you can find it again.
-- Log watering & check-ups, flag a tree as **needing attention**, update its health, and add photos over time — so saplings actually survive.
+- Log watering & check-ups, flag a tree as **needing attention**, update its health,
+  and add photos over time.
 
-Built with **Next.js (App Router) + TypeScript**, **Supabase** (auth + Postgres + photo storage),
-**Leaflet + OpenStreetMap** (free, no API key) and **Tailwind CSS**.
+## Quick start
 
----
-
-## What you need
-
-- A free [Supabase](https://supabase.com) account (database, auth, photo storage).
-- A free [Vercel](https://vercel.com) account (hosting) — or run it locally.
-- Node.js (this repo was developed and tested on **Node 16**; Node 18+ also works).
-
----
-
-## 1. Set up Supabase (~5 minutes)
-
-1. Go to [supabase.com](https://supabase.com) → **New project**. Pick a name and a database
-   password (save it somewhere). Wait for it to finish provisioning.
-2. In the dashboard, open **SQL Editor → New query**, paste the entire contents of
-   [`supabase/schema.sql`](./supabase/schema.sql), and click **Run**. This creates the
-   tables, security rules, the photo storage bucket, and the new-user trigger. It's safe
-   to re-run.
-3. Open **Project Settings → API** and copy two values:
-   - **Project URL**
-   - **Project API key** → the **`anon` / `public`** key (not the secret service key).
-4. Email confirmation is **on by default** in Supabase, which is exactly what we want.
-   - On the free tier, Supabase's built-in email sender is rate-limited and only sends to
-     a few addresses — fine for a prototype. For real use, add your own SMTP under
-     **Authentication → Emails → SMTP Settings**.
-   - Under **Authentication → URL Configuration**, set **Site URL** to your deployed URL
-     (e.g. `https://your-app.vercel.app`) and add it (plus `http://localhost:3000`) to
-     **Redirect URLs**, so the confirmation link returns users to the right place.
-
-## 2. Run it locally
+You need a free [Supabase](https://supabase.com) project (database, auth, storage)
+and Node.js 16+.
 
 ```bash
-# 1. install dependencies
+# 1. Create a Supabase project, then run supabase/schema.sql in its SQL editor
+#    (creates tables, RLS policies, the photo bucket and the new-user trigger).
+
+# 2. Install and configure
 npm install
-
-# 2. create your env file from the template and fill in the two values
 cp env.example .env.local
-#   NEXT_PUBLIC_SUPABASE_URL=...        (your Project URL)
-#   NEXT_PUBLIC_SUPABASE_ANON_KEY=...   (your anon/public key)
+#   NEXT_PUBLIC_SUPABASE_URL=...        (Project URL)
+#   NEXT_PUBLIC_SUPABASE_ANON_KEY=...   (anon/public key)
 
-# 3. start the dev server
-npm run dev
+# 3. Run
+npm run dev       # http://localhost:3000
 ```
 
-Open <http://localhost:3000>, create an account, confirm via the email link, then sign in.
+In Supabase, set **Authentication → URL Configuration** so the email-confirmation
+link returns users to your URL (add `http://localhost:3000` for local dev).
 
-> **Note on GPS:** browsers only allow location access over **HTTPS** (or on
-> `localhost`). On a deployed Vercel URL it works automatically. To test phone GPS during
-> local dev, either use `localhost` on the phone via port-forwarding, or just tap the map
-> to place pins.
+> **GPS note:** browsers only allow location access over HTTPS (or `localhost`).
+> On the deployed URL it works automatically; locally, tap the map to place pins.
 
-## 3. Deploy to Vercel (free)
+## Deploying (free)
 
-1. Push this repo to GitHub.
-2. In Vercel, **Add New → Project**, import the repo (Vercel auto-detects Next.js).
-3. Under **Environment Variables**, add the same two variables from `.env.local`:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-4. **Deploy.** Then go back to Supabase → **Authentication → URL Configuration** and make
-   sure your `https://<your-app>.vercel.app` is set as the Site URL and Redirect URL.
-
-That's it — share the URL with your fellow planters.
-
----
+Import the repo into [Vercel](https://vercel.com) (auto-detects Next.js), add the two
+environment variables, deploy, then set the Vercel URL as the Supabase Site URL and
+redirect URL. Full walkthrough in [`DEPLOY.md`](./DEPLOY.md).
 
 ## How it works
 
 | Area | Choice |
 | --- | --- |
-| Auth | Supabase email/password with **email confirmation**. A Postgres trigger auto-creates a `profiles` row with the display name on signup. |
-| Map | Leaflet + OpenStreetMap tiles. Markers are colour-coded by health, with a 🚩 badge when a tree needs attention. |
-| Add tree | Uses the browser Geolocation API for phone GPS; falls back to tapping/dragging a pin on the map. |
-| Photos | Uploaded to a public Supabase Storage bucket (`tree-photos`); metadata in the `tree_photos` table. |
-| Security | Row Level Security: any signed-in member can view everything and collaboratively log care; only a tree's creator can delete it. See `supabase/schema.sql`. |
+| Auth | Supabase email/password with **email confirmation**. A Postgres trigger auto-creates a `profiles` row on signup. |
+| Map | Leaflet + OpenStreetMap tiles. Markers colour-coded by health, with a 🚩 badge when a tree needs attention. |
+| Add tree | Browser Geolocation API for phone GPS; falls back to tapping/dragging a pin. |
+| Photos | Supabase Storage bucket (`tree-photos`); metadata in the `tree_photos` table. |
+| Security | Row Level Security: any signed-in member can view everything and log care collaboratively; only a tree's creator can delete it. |
 
 ### Project structure
 
@@ -104,10 +86,9 @@ src/
     supabase/             browser + server clients
     api.ts                all data reads/writes
     database.types.ts     typed schema
-    format.ts             status colours, labels, marker HTML, dates
   middleware.ts           refreshes the session and guards /map
 supabase/
-  schema.sql              run this once in the Supabase SQL editor
+  schema.sql              run once in the Supabase SQL editor
 ```
 
 ## Ideas for later
